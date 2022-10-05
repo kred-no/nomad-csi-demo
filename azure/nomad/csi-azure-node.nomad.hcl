@@ -4,6 +4,8 @@ variable "credentials" {
     subscription_id = string
     application_id  = string
     client_secret   = string
+    resource_group  = string
+    location        = string
   })
 }
 
@@ -13,6 +15,8 @@ locals {
   azure_subscriptionId = var.azure.subscription_id
   azure_application_id = var.azure.application_id
   azure_client_secret  = var.azure.client_secret
+  azure_resource_group  = var.azure.resource_group
+  azure_location        = var.azure.location
 
   plugin_image         = "mcr.microsoft.com/oss/kubernetes-csi/azuredisk-csi"
   plugin_image_version = "v1.12.0" //v1.13.0 fails on nodes (not controller)
@@ -39,8 +43,8 @@ job "plugin-azure-disk-nodes" {
           "subscriptionId": "${local.azure_subscription_id}",
           "aadClientId": "${local.azure_application_id}",
           "aadClientSecret": "${local.azure_client_secret}",
-          "resourceGroup": "nomad-csi",
-          "location": "norwayeast",
+          "resourceGroup": "${local.resource_group}",
+          "location": "${local.location}",
         }
         EOH
       }
