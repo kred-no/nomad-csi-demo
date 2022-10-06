@@ -9,6 +9,11 @@ variable "azure" {
   })
 }
 
+variable "plugin_version" {
+  type    = string
+  default = "v1.16.0"
+}
+
 variable "namespace" {
   type    = string
   default = "default"
@@ -26,8 +31,12 @@ locals {
   azure_location        = var.azure.location
 
   plugin_image         = "mcr.microsoft.com/oss/kubernetes-csi/blob-csi"
-  plugin_image_version = "v1.16.0"
+  plugin_image_version = var.plugin_version
 }
+
+//////////////////////////////////
+// NOMAD JOBSPEC
+//////////////////////////////////
 
 job "plugin-azure-blob-nodes" {
   namespace   = local.namespace

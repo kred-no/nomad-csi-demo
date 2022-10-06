@@ -4,7 +4,7 @@ job "csi-delete-volume" {
   type = "batch"
   
   parameterized {
-    meta_optional = ["NOMAD_TOKEN","NOMAD_NAMESPACE"]
+    meta_optional = ["NOMAD_ADDRESS","NOMAD_TOKEN","NOMAD_NAMESPACE"]
     meta_required = ["volume_id"]
     payload       = "forbidden"
   }
@@ -29,8 +29,9 @@ job "csi-delete-volume" {
         image = "kdsda/nomad:scratch-1.4.0"
         args  = [
           "volume", "delete",
-          "-namespace","${NOMAD_META_NOMAD_NAMESPACE}",
-          "-token","${NOMAD_META_NOMAD_TOKEN}",
+          "-address=${NOMAD_META_NOMAD_ADDRESS}",
+          "-namespace=${NOMAD_META_NOMAD_NAMESPACE}",
+          "-token=${NOMAD_META_NOMAD_TOKEN}",
           "${NOMAD_META_volume_id}"
         ]
       }
