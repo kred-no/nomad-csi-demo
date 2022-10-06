@@ -27,6 +27,13 @@ job "plugin-azure-disk-controller" {
   datacenters = ["dc1"]
 
   group "controller" {
+
+    ephemeral_disk {
+      migrate = false
+      sticky  = false
+      size    = 75
+    }
+
     task "plugin" {
       driver = "docker"
 

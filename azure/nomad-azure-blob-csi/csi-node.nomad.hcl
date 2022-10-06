@@ -9,8 +9,13 @@ variable "azure" {
   })
 }
 
+variable "namespace" {
+  type    = string
+  default = "default"
+}
+
 locals {
-  namespace = "default"
+  namespace = var.namespace
   
   // E.g. from terraform
   azure_tenant_id       = var.azure.tenant_id
@@ -31,6 +36,13 @@ job "plugin-azure-blob-nodes" {
   type = "system"
 
   group "nodes" {
+
+    ephemeral_disk {
+      migrate = false
+      sticky  = false
+      size    = 50
+    }
+    
     task "plugin" {
       driver = "docker"
 
@@ -82,6 +94,11 @@ job "plugin-azure-blob-nodes" {
         cpu        = 100
         memory     = 50
         memory_max = 250
+      }
+
+      logs {
+        max_files     = 5
+        max_file_size = 5
       }
     }
   }
