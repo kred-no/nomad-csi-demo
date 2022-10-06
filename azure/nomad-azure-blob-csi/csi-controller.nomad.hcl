@@ -1,4 +1,4 @@
-variable "credentials" {
+variable "azure" {
   type = object({
     tenant_id       = string
     subscription_id = string
@@ -10,20 +10,22 @@ variable "credentials" {
 }
 
 locals {
+  namespace = "default"
+
   // E.g. from terraform
-  azure_tenant_id      = var.azure.tenant_id
-  azure_subscriptionId = var.azure.subscription_id
-  azure_application_id = var.azure.application_id
-  azure_client_secret  = var.azure.client_secret
+  azure_tenant_id       = var.azure.tenant_id
+  azure_subscription_id = var.azure.subscription_id
+  azure_application_id  = var.azure.application_id
+  azure_client_secret   = var.azure.client_secret
   azure_resource_group  = var.azure.resource_group
   azure_location        = var.azure.location
 
-  plugin_image         = "mcr.microsoft.com/oss/kubernetes-csi/azuredisk-csi"
-  plugin_image_version = "v1.12.0" //v1.13.0 fails on nodes (not controller)
+  plugin_image         = "mcr.microsoft.com/oss/kubernetes-csi/blob-csi"
+  plugin_image_version = "v1.16.0"
 }
 
-job "plugin-azure-disk-controller" {
-  namespace   = "kds"
+job "plugin-azure-blob-controller" {
+  namespace   = local.namespace
   datacenters = ["dc1"]
 
   group "controller" {
@@ -32,19 +34,17 @@ job "plugin-azure-disk-controller" {
 
       template {
         change_mode = "noop"
-        destination = "local/azure.json"
-
-        data = <<-EOH
-        {
-          "cloud": "AzurePublicCloud",
-          "tenantId": "${local.azure_tenant_id}",
-          "subscriptionId": "${local.azure_subscription_id}",
-          "aadClientId": "${local.azure_application_id}",
-          "aadClientSecret": "${local.azure_client_secret}",
-          "resourceGroup": "${local.resource_group}",
-          "location": "${local.location}",
-        }
-        EOH
+        destination = "/local/azure.json"
+        
+        data = jsonencode({
+          cloud           = "AzurePublicCloud",
+          tenantId        = local.azure_tenant_id
+          subscriptionId  = local.azure_subscription_id
+          aadClientId     = local.azure_application_id
+          aadClientSecret = local.azure_client_secret
+          resourceGroup   = local.azure_resource_group
+          location        = local.azure_location
+        })
       }
 
       env {
@@ -52,7 +52,7 @@ job "plugin-azure-disk-controller" {
       }
 
       config {
-        image = "mcr.microsoft.com/k8s/csi/azuredisk-csi"
+        image = join(":", [local.plugin_image, local.plugin_image_version])
 
         mount {
           type     = "bind"
@@ -70,15 +70,15 @@ job "plugin-azure-disk-controller" {
       }
 
       csi_plugin {
-        id        = "az-disk0"
+        id        = "az-blob"
         type      = "controller"
         mount_dir = "/csi"
       }
 
       resources {
         cpu        = 100
-        memory     = 75
-        memory_max = 300
+        memory     = 50
+        memory_max = 250
       }
     }
   }

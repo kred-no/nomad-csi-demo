@@ -9,7 +9,7 @@ job "csi-demo" {
 
     volume "azure_disk" {
       type            = "csi"
-      source          = "azure-disk0"
+      source          = "vol-1"
       access_mode     = "single-node-writer"
       attachment_mode = "file-system"
       per_alloc       = false //Requires [n] for volume names ..

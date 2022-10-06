@@ -15,20 +15,18 @@ locals {
   azure_subscriptionId = var.azure.subscription_id
   azure_application_id = var.azure.application_id
   azure_client_secret  = var.azure.client_secret
-  azure_resource_group  = var.azure.resource_group
-  azure_location        = var.azure.location
+  azure_resource_group = var.azure.resource_group
+  azure_location       = var.azure.location
 
   plugin_image         = "mcr.microsoft.com/oss/kubernetes-csi/azuredisk-csi"
   plugin_image_version = "v1.12.0" //v1.13.0 fails on nodes (not controller)
 }
 
-job "plugin-azure-disk-nodes" {
-  namespace   = "kds"
+job "plugin-azure-disk-controller" {
+
   datacenters = ["dc1"]
 
-  type = "system"
-
-  group "nodes" {
+  group "controller" {
     task "plugin" {
       driver = "docker"
 
@@ -54,9 +52,8 @@ job "plugin-azure-disk-nodes" {
       }
 
       config {
-        image      = join(":",[local.plugin_image,local.plugin_image_version])
-        privileged = true
-        
+        image = join(":", [local.plugin_image, local.plugin_image_version])
+
         mount {
           type     = "bind"
           target   = "/etc/kubernetes/azure.json"
@@ -73,8 +70,8 @@ job "plugin-azure-disk-nodes" {
       }
 
       csi_plugin {
-        id        = "az-disk0"
-        type      = "node"
+        id        = "az-disk"
+        type      = "controller"
         mount_dir = "/csi"
       }
 
